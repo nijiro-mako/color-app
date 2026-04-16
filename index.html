@@ -1,3 +1,616 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ニジーロ｜色活診断アプリ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --off-white: #FAF7F2;
+    --cream: #F2ECD8;
+    --burgundy: #8B4A5A;
+    --burgundy-light: #C4849A;
+    --charcoal: #3D3535;
+    --gold: #C4A882;
+    --gold-light: #EEE0C8;
+    --sage: #7A9E7E;
+    --sage-light: #C8DCC8;
+    --dusty-blue: #7B9BB5;
+    --soft-pink: #E8C5C5;
+    --gray: #888888;
+  }
+
+  body {
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', Georgia, serif;
+    background: var(--off-white);
+    color: var(--charcoal);
+    min-height: 100vh;
+  }
+
+  .app { max-width: 480px; margin: 0 auto; padding: 1rem 1.2rem 3rem; }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .brand-header {
+    text-align: center;
+    padding: 2rem 0 0.5rem;
+    border-bottom: 1px solid var(--gold);
+    margin-bottom: 1.5rem;
+  }
+  .brand-logo {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    margin-bottom: 4px;
+  }
+  .brand-title { font-size: 22px; color: var(--burgundy); font-weight: normal; letter-spacing: 2px; }
+  .brand-sub { font-size: 11px; color: var(--gray); margin-top: 4px; letter-spacing: 1px; }
+
+  .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 1.5rem 0; }
+  .menu-card {
+    background: #fff;
+    border: 1px solid var(--gold-light);
+    border-radius: 16px;
+    padding: 1.2rem 1rem;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .menu-card:hover { background: var(--gold-light); border-color: var(--gold); transform: translateY(-2px); }
+  .menu-icon { font-size: 26px; margin-bottom: 8px; }
+  .menu-title { font-size: 13px; font-weight: 500; color: var(--burgundy); font-family: 'Hiragino Kaku Gothic ProN', sans-serif; }
+  .menu-desc { font-size: 10px; color: var(--gray); margin-top: 4px; line-height: 1.5; }
+
+  .btn-back {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 12px; color: var(--gray);
+    background: none; border: none; cursor: pointer;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    margin-bottom: 1rem; padding: 4px 0;
+    letter-spacing: 1px;
+  }
+  .btn-back:hover { color: var(--burgundy); }
+
+  .btn-primary {
+    width: 100%; padding: 14px;
+    border-radius: 10px; border: 1px solid var(--burgundy);
+    background: var(--burgundy); color: #fff;
+    font-size: 14px; cursor: pointer;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    letter-spacing: 1px; margin-top: 1.2rem;
+    transition: opacity 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+
+  .btn-secondary {
+    width: 100%; padding: 12px;
+    border-radius: 10px; border: 1px solid var(--gold);
+    background: #fff; color: var(--charcoal);
+    font-size: 13px; cursor: pointer;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    letter-spacing: 1px; margin-top: 0.8rem;
+    transition: background 0.2s;
+  }
+  .btn-secondary:hover { background: var(--gold-light); }
+
+  .color-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 1.5rem 0; }
+  .color-card {
+    aspect-ratio: 1; border-radius: 50%;
+    cursor: pointer;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    transition: transform 0.15s; padding: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  .color-card:hover { transform: scale(1.08); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+  .color-label { font-size: 11px; font-weight: 500; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.4); font-family: 'Hiragino Kaku Gothic ProN', sans-serif; }
+
+  .result-circle { width: 110px; height: 110px; border-radius: 50%; margin: 1.5rem auto; box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+
+  .result-box { text-align: center; }
+  .result-name { font-size: 20px; color: var(--burgundy); margin-bottom: 6px; letter-spacing: 1px; }
+  .result-keyword { font-size: 11px; color: var(--gold); letter-spacing: 2px; margin-bottom: 12px; font-family: 'Hiragino Kaku Gothic ProN', sans-serif; }
+  .result-meaning { font-size: 13px; color: var(--charcoal); line-height: 1.9; margin-bottom: 1rem; }
+
+  .tag {
+    display: inline-block; font-size: 11px;
+    padding: 4px 12px; border-radius: 20px;
+    margin: 3px; font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+  }
+
+  .progress-bar { height: 2px; background: var(--cream); border-radius: 2px; margin: 0.5rem 0 1.5rem; }
+  .progress-fill { height: 100%; border-radius: 2px; background: var(--burgundy); transition: width 0.3s; }
+
+  .q-number { font-size: 10px; color: var(--gold); letter-spacing: 2px; font-family: 'Hiragino Kaku Gothic ProN', sans-serif; margin-bottom: 8px; }
+  .q-text { font-size: 17px; color: var(--charcoal); line-height: 1.6; margin-bottom: 1.5rem; }
+
+  .q-options { display: flex; flex-direction: column; gap: 10px; }
+  .q-btn {
+    background: #fff; border: 1px solid var(--gold-light);
+    border-radius: 12px; padding: 14px 16px;
+    font-size: 13px; cursor: pointer;
+    text-align: left; color: var(--charcoal);
+    font-family: 'Hiragino Mincho ProN', serif;
+    line-height: 1.5; transition: all 0.15s;
+  }
+  .q-btn:hover { background: var(--gold-light); border-color: var(--gold); }
+
+  .mood-card {
+    background: #fff; border: 1px solid var(--gold-light);
+    border-radius: 14px; padding: 1.2rem;
+    margin-top: 1.2rem;
+  }
+  .mood-label { font-size: 10px; color: var(--gold); letter-spacing: 2px; margin-bottom: 8px; font-family: 'Hiragino Kaku Gothic ProN', sans-serif; }
+  .mood-color-row { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+  .mood-circle { width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .mood-color-name { font-size: 16px; color: var(--burgundy); }
+  .mood-color-key { font-size: 11px; color: var(--gray); margin-top: 2px; font-family: 'Hiragino Kaku Gothic ProN', sans-serif; }
+  .mood-advice { font-size: 12px; color: var(--charcoal); line-height: 1.8; padding-top: 10px; border-top: 1px solid var(--cream); }
+
+  .insta-cta {
+    background: linear-gradient(135deg, var(--gold-light), var(--soft-pink));
+    border-radius: 14px; padding: 1.2rem;
+    margin-top: 1.5rem; text-align: center;
+  }
+  .insta-cta-title { font-size: 13px; color: var(--burgundy); font-family: 'Hiragino Kaku Gothic ProN', sans-serif; font-weight: 500; margin-bottom: 4px; }
+  .insta-cta-sub { font-size: 11px; color: var(--gray); line-height: 1.6; margin-bottom: 10px; }
+  .insta-btn {
+    display: inline-block; padding: 8px 20px;
+    border-radius: 20px; background: var(--burgundy); color: #fff;
+    font-size: 12px; text-decoration: none;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    letter-spacing: 1px; cursor: pointer;
+  }
+
+  .daily-circle { width: 130px; height: 130px; border-radius: 50%; margin: 1rem auto; box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+  .daily-color-name { font-size: 22px; color: var(--burgundy); text-align: center; margin-bottom: 6px; }
+  .daily-message { font-size: 13px; color: var(--charcoal); line-height: 1.9; text-align: center; margin-bottom: 1rem; }
+  .daily-advice-box {
+    background: #fff; border: 1px solid var(--gold-light);
+    border-radius: 12px; padding: 1rem;
+    margin-top: 1rem;
+  }
+  .daily-advice-label { font-size: 10px; color: var(--gold); letter-spacing: 2px; font-family: 'Hiragino Kaku Gothic ProN', sans-serif; margin-bottom: 6px; }
+  .daily-advice-text { font-size: 13px; color: var(--charcoal); line-height: 1.8; }
+
+  .screen-title { font-size: 20px; color: var(--burgundy); margin-bottom: 4px; letter-spacing: 1px; }
+  .screen-sub { font-size: 12px; color: var(--gray); line-height: 1.6; margin-bottom: 1rem; font-family: 'Hiragino Kaku Gothic ProN', sans-serif; }
+
+  .divider { height: 1px; background: var(--gold-light); margin: 1rem 0; }
+
+  /* シェアボタン */
+  .share-buttons {
+    display: flex; gap: 8px; margin-top: 1rem;
+  }
+  .share-btn {
+    flex: 1; padding: 11px 8px;
+    border-radius: 10px; font-size: 12px; cursor: pointer;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    letter-spacing: 0.5px; transition: all 0.2s;
+    border: 1px solid var(--gold);
+  }
+  .share-insta {
+    background: var(--burgundy); color: #fff; border-color: var(--burgundy);
+  }
+  .share-insta:hover { opacity: 0.85; }
+  .share-send {
+    background: #fff; color: var(--charcoal);
+  }
+  .share-send:hover { background: var(--gold-light); }
+
+  /* トースト通知 */
+  .toast {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    background: var(--charcoal); color: #fff;
+    padding: 12px 20px; border-radius: 24px;
+    font-size: 12px; font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+    z-index: 1000; white-space: nowrap; max-width: 90vw; text-align: center;
+  }
+  .toast.show { opacity: 1; }
+
+  .footer { text-align: center; margin-top: 2rem; }
+  .footer-brand { font-size: 10px; color: var(--gold); letter-spacing: 3px; font-family: 'Hiragino Kaku Gothic ProN', sans-serif; }
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="brand-header">
+    <div class="brand-logo">NIJIIRO COLORS</div>
+    <div class="brand-title">色活診断アプリ</div>
+    <div class="brand-sub">今日の色で、今日の自分を知ろう</div>
+  </div>
+
+  <div class="menu-grid">
+    <div class="menu-card" onclick="showScreen('screen-color')">
+      <div class="menu-icon">🎨</div>
+      <div class="menu-title">今日の色を選ぶ</div>
+      <div class="menu-desc">気になる色から今の気持ちを診断</div>
+    </div>
+    <div class="menu-card" onclick="showScreen('screen-quiz')">
+      <div class="menu-icon">✨</div>
+      <div class="menu-title">色タイプ診断</div>
+      <div class="menu-desc">質問に答えてあなたの色を発見</div>
+    </div>
+    <div class="menu-card" onclick="showScreen('screen-mood')">
+      <div class="menu-icon">🌿</div>
+      <div class="menu-title">気分を整える色</div>
+      <div class="menu-desc">今の感情に合う色を処方します</div>
+    </div>
+    <div class="menu-card" onclick="showScreen('screen-daily')">
+      <div class="menu-icon">🌈</div>
+      <div class="menu-title">今日の色占い</div>
+      <div class="menu-desc">今日のラッキーカラーをチェック</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="insta-cta">
+    <div class="insta-cta-title">毎日の色活を一緒に楽しみませんか？</div>
+    <div class="insta-cta-sub">色活を日常に届けるマコのInstagramでは<br>毎日小さな色の気づきを発信しています</div>
+    <a class="insta-btn" href="https://www.instagram.com/nijiiro_colors/" target="_blank" rel="noopener noreferrer" onclick="window.open('https://www.instagram.com/nijiiro_colors/','_blank'); return false;">@nijiiro_colors をフォロー 🌈</a>
+  </div>
+
+  <div class="footer"><div class="footer-brand">色活を、日常に。色活を、遊ぼう。</div></div>
+</div>
+
+<!-- COLOR PICK -->
+<div class="screen" id="screen-color">
+  <button class="btn-back" onclick="showScreen('screen-home')">← ホームへ</button>
+  <div class="screen-title">今日の色を選ぶ</div>
+  <div class="screen-sub">直感で1色選んでください。<br>今のあなたの本音が隠れています。</div>
+
+  <div class="color-grid" id="color-grid"></div>
+
+  <div id="color-result" style="display:none;">
+    <div class="result-circle" id="result-circle"></div>
+    <div class="result-box">
+      <div class="result-name" id="result-name"></div>
+      <div class="result-keyword" id="result-keyword"></div>
+      <div class="result-meaning" id="result-meaning"></div>
+      <div id="result-tags"></div>
+    </div>
+    <button class="btn-secondary" onclick="resetColor()">別の色を選ぶ</button>
+    <div class="share-buttons">
+      <button class="share-btn share-insta" onclick="copyForInstagram()">📷 Instagramでシェア</button>
+      <button class="share-btn share-send" onclick="shareWithFriends()">📨 友達に送る</button>
+    </div>
+    <div class="insta-cta" style="margin-top:1.2rem;">
+      <div class="insta-cta-title">もっと色活を楽しみたい方へ</div>
+      <div class="insta-cta-sub">毎日の色活ヒントをInstagramで発信中🌈</div>
+      <a class="insta-btn" href="https://www.instagram.com/nijiiro_colors/" target="_blank" rel="noopener noreferrer" onclick="window.open('https://www.instagram.com/nijiiro_colors/','_blank'); return false;">@nijiiro_colors をフォロー</a>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="screen-quiz">
+  <button class="btn-back" onclick="showScreen('screen-home')">← ホームへ</button>
+  <div class="progress-bar"><div class="progress-fill" id="quiz-progress" style="width:0%"></div></div>
+  <div id="quiz-content"></div>
+</div>
+
+<!-- MOOD -->
+<div class="screen" id="screen-mood">
+  <button class="btn-back" onclick="showScreen('screen-home')">← ホームへ</button>
+  <div class="screen-title">気分を整える色</div>
+  <div class="screen-sub">今の気持ちに一番近いものを選んでください</div>
+  <div class="q-options" id="mood-options"></div>
+  <div id="mood-result" style="display:none;margin-top:1rem;">
+    <div class="mood-card">
+      <div class="mood-label">今日のおすすめカラー</div>
+      <div class="mood-color-row">
+        <div class="mood-circle" id="mood-circle"></div>
+        <div>
+          <div class="mood-color-name" id="mood-color-name"></div>
+          <div class="mood-color-key" id="mood-color-desc"></div>
+        </div>
+      </div>
+      <div class="mood-advice" id="mood-advice"></div>
+    </div>
+    <button class="btn-secondary" onclick="resetMood()">もう一度選ぶ</button>
+    <div class="share-buttons">
+      <button class="share-btn share-insta" onclick="copyForInstagram()">📷 Instagramでシェア</button>
+      <button class="share-btn share-send" onclick="shareWithFriends()">📨 友達に送る</button>
+    </div>
+    <div class="insta-cta" style="margin-top:1.2rem;">
+      <div class="insta-cta-title">毎日の色処方はInstagramで🌈</div>
+      <div class="insta-cta-sub">色で心をととのえるヒントを毎日発信中</div>
+      <a class="insta-btn" href="https://www.instagram.com/nijiiro_colors/" target="_blank" rel="noopener noreferrer" onclick="window.open('https://www.instagram.com/nijiiro_colors/','_blank'); return false;">@nijiiro_colors をフォロー</a>
+    </div>
+  </div>
+</div>
+
+<!-- DAILY -->
+<div class="screen" id="screen-daily">
+  <button class="btn-back" onclick="showScreen('screen-home')">← ホームへ</button>
+  <div class="screen-title">今日の色占い</div>
+  <div class="screen-sub">今日のあなたへ、色からのメッセージ</div>
+  <div id="daily-content"></div>
+</div>
+
+<script>
+const COLORS = [
+  { name:'レッド', hex:'#C47A7A', keyword:'情熱 · やる気 · 勇気',
+    meaning:'今、あなたの中に強いエネルギーがあります。行動力と自信が高まっているサイン。積極的に動いてみて。',
+    tags:['行動力','情熱','勇気'] },
+  { name:'オレンジ', hex:'#D4956A', keyword:'活力 · 社交 · 楽しさ',
+    meaning:'人とのつながりを求めています。誰かと話したり、笑ったりすることが今日の開運のカギ。',
+    tags:['社交','活力','楽しさ'] },
+  { name:'イエロー', hex:'#D4B84A', keyword:'希望 · 知性 · 明るさ',
+    meaning:'知的好奇心が高まっています。気になっていたことを調べたり、新しいことを学ぶには最高のタイミング。',
+    tags:['希望','学び','好奇心'] },
+  { name:'グリーン', hex:'#7A9E7E', keyword:'癒し · 安心 · バランス',
+    meaning:'こころが少し疲れているかも。緑のある場所で深呼吸すると、自然に心がゆるんでいきます。',
+    tags:['癒し','バランス','安心'] },
+  { name:'スカイグレー', hex:'#9BAAB8', keyword:'静けさ · 知性 · 内省',
+    meaning:'曇り空のような穏やかさの中にいます。今日はゆっくり自分の内側と向き合う時間を大切に。',
+    tags:['静けさ','内省','誠実'] },
+  { name:'ローズグレー', hex:'#C4A0A8', keyword:'やさしさ · 直感 · 創造',
+    meaning:'朝焼けや夕焼けの空のような、やわらかな感性が冴えています。感じたことを言葉や色で表現してみて。',
+    tags:['直感','感性','創造'] },
+];
+
+const MOODS = [
+  { label:'イライラ · モヤモヤする', color: COLORS[4],
+    advice:'スカイグレーの空を眺めてみて。感情がそっとクールダウンされていきます。水を飲むのもおすすめ。' },
+  { label:'不安 · 緊張している', color: COLORS[3],
+    advice:'緑色が不安をやさしく包んでくれます。観葉植物や窓の外の緑を5分眺めるだけで変わります。' },
+  { label:'やる気が出ない', color: COLORS[1],
+    advice:'オレンジ色でエネルギーを補給して。オレンジジュースを飲んだり、温かいものを食べてみて。' },
+  { label:'悲しい · さみしい', color: { name:'ピンク', hex:'#D4909A', keyword:'愛 · やさしさ'},
+    advice:'ピンク色が心を包んでくれます。好きな花を飾ったり、やわらかいものに触れてみて。' },
+  { label:'疲れ果てている', color: COLORS[5],
+    advice:'ローズグレーは夕焼けの色。今日の終わりをやさしく迎えて。ゆっくりお風呂に入るのがおすすめ。' },
+  { label:'わりと元気です', color: COLORS[0],
+    advice:'そのエネルギー、今日の挑戦に使って。赤い食べ物をランチに取り入れると更に活力がアップ。' },
+];
+
+const QUIZ_Q = [
+  { q:'週末の理想の過ごし方は？', opts:[
+    { label:'アクティブに外出 · スポーツ', score:'red' },
+    { label:'誰かとにぎやかに過ごす', score:'orange' },
+    { label:'本や映画でインプット', score:'yellow' },
+    { label:'自然の中でのんびり', score:'green' },
+  ]},
+  { q:'ストレスを感じたとき、どうする？', opts:[
+    { label:'体を動かして発散', score:'red' },
+    { label:'誰かに話を聞いてもらう', score:'orange' },
+    { label:'一人で考えて整理する', score:'blue' },
+    { label:'ゆっくり休んで回復', score:'green' },
+  ]},
+  { q:'自分の強みだと思うのは？', opts:[
+    { label:'行動力 · 決断力', score:'red' },
+    { label:'コミュニケーション力', score:'orange' },
+    { label:'分析力 · 論理的思考', score:'blue' },
+    { label:'共感力 · 感じる力', score:'purple' },
+  ]},
+];
+
+const COLOR_TYPES = {
+  red:    { name:'レッドタイプ', hex:'#C47A7A',
+    desc:'情熱的で行動力があるリーダー気質。目標に向かってまっすぐ進む力があります。その熱量で周りを動かして。',
+    tags:['行動力','リーダー','情熱'] },
+  orange: { name:'オレンジタイプ', hex:'#D4956A',
+    desc:'明るく社交的で、周りを元気にする存在。人との絆を大切にし、笑顔が周りを照らします。',
+    tags:['社交的','明るさ','チームワーク'] },
+  yellow: { name:'イエロータイプ', hex:'#D4B84A',
+    desc:'知的好奇心旺盛で、何事も前向きに捉えられる楽観主義者。アイデアが豊富で発想が柔軟。',
+    tags:['知性','好奇心','楽観'] },
+  green:  { name:'グリーンタイプ', hex:'#7A9E7E',
+    desc:'穏やかで思いやりがあり、バランス感覚に優れています。周りをそっと癒す、やさしい存在。',
+    tags:['癒し','調和','思いやり'] },
+  blue:   { name:'スカイグレータイプ', hex:'#9BAAB8',
+    desc:'冷静で論理的、信頼感があります。じっくり考えて確実に進む誠実さと、深い内省力が魅力。',
+    tags:['誠実','冷静','内省'] },
+  purple: { name:'ローズグレータイプ', hex:'#C4A0A8',
+    desc:'直感力と感性に溢れた個性派。朝焼けのようなやわらかさで、周りをインスパイアします。',
+    tags:['創造性','直感','感性'] },
+};
+
+const APP_URL = 'https://nijiro-mako.github.io/color-app/';
+let _shareText = '';
+
+function setShareText(text) { _shareText = text; }
+
+function copyForInstagram() {
+  const text = _shareText + '\n\n🌈 あなたも試してみて！\n' + APP_URL;
+  const doToast = () => showToast('コピーしました！Instagramストーリーに貼り付けてね🌈');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(doToast).catch(() => fallbackCopy(text, doToast));
+  } else {
+    fallbackCopy(text, doToast);
+  }
+}
+
+function fallbackCopy(text, cb) {
+  const el = document.createElement('textarea');
+  el.value = text; el.style.position = 'fixed'; el.style.opacity = '0';
+  document.body.appendChild(el); el.focus(); el.select();
+  try { document.execCommand('copy'); cb(); } catch(e) {}
+  document.body.removeChild(el);
+}
+
+function shareWithFriends() {
+  if (navigator.share) {
+    navigator.share({ title: 'ニジーロ｜色活診断アプリ', text: _shareText, url: APP_URL }).catch(() => {});
+  } else {
+    copyForInstagram();
+  }
+}
+
+function showToast(msg) {
+  let toast = document.getElementById('app-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'app-toast'; toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+let quizAnswers = {}, currentQ = 0;
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+  if (id === 'screen-color') initColorGrid();
+  if (id === 'screen-quiz') initQuiz();
+  if (id === 'screen-mood') initMood();
+  if (id === 'screen-daily') initDaily();
+}
+
+function initColorGrid() {
+  const grid = document.getElementById('color-grid');
+  grid.innerHTML = '';
+  document.getElementById('color-result').style.display = 'none';
+  grid.style.display = 'grid';
+  COLORS.forEach(col => {
+    const card = document.createElement('div');
+    card.className = 'color-card';
+    card.style.background = col.hex;
+    card.innerHTML = `<div class="color-label">${col.name}</div>`;
+    card.onclick = () => showColorResult(col);
+    grid.appendChild(card);
+  });
+}
+
+function showColorResult(col) {
+  document.getElementById('color-grid').style.display = 'none';
+  document.getElementById('color-result').style.display = 'block';
+  document.getElementById('result-circle').style.background = col.hex;
+  document.getElementById('result-name').textContent = col.name;
+  document.getElementById('result-keyword').textContent = col.keyword;
+  document.getElementById('result-meaning').textContent = col.meaning;
+  document.getElementById('result-tags').innerHTML = col.tags.map(t =>
+    `<span class="tag" style="background:${col.hex}22;color:${col.hex};border:1px solid ${col.hex}66;">${t}</span>`
+  ).join('');
+  setShareText(`【ニジーロ 今日の色診断】\n今日の色：${col.name}\n${col.keyword}\n\n${col.meaning}`);
+}
+
+function resetColor() {
+  document.getElementById('color-grid').style.display = 'grid';
+  document.getElementById('color-result').style.display = 'none';
+}
+
+function initQuiz() {
+  quizAnswers = {}; currentQ = 0;
+  renderQuestion();
+}
+
+function renderQuestion() {
+  document.getElementById('quiz-progress').style.width = (currentQ / QUIZ_Q.length * 100) + '%';
+  if (currentQ >= QUIZ_Q.length) { showQuizResult(); return; }
+  const q = QUIZ_Q[currentQ];
+  document.getElementById('quiz-content').innerHTML = `
+    <div class="q-number">QUESTION ${currentQ+1} / ${QUIZ_Q.length}</div>
+    <div class="q-text">${q.q}</div>
+    <div class="q-options">${q.opts.map(o =>
+      `<button class="q-btn" onclick="answerQuiz('${o.score}')">${o.label}</button>`
+    ).join('')}</div>
+  `;
+}
+
+function answerQuiz(score) {
+  quizAnswers[score] = (quizAnswers[score] || 0) + 1;
+  currentQ++;
+  renderQuestion();
+}
+
+function showQuizResult() {
+  document.getElementById('quiz-progress').style.width = '100%';
+  const top = Object.entries(quizAnswers).sort((a,b) => b[1]-a[1])[0][0];
+  const type = COLOR_TYPES[top] || COLOR_TYPES.green;
+  setShareText(`【ニジーロ 色タイプ診断】\nわたしは「${type.name}」\n\n${type.desc}`);
+  document.getElementById('quiz-content').innerHTML = `
+    <div style="text-align:center;padding:0.5rem 0 1rem;">
+      <div style="width:110px;height:110px;border-radius:50%;margin:0 auto 1.2rem;background:${type.hex};box-shadow:0 4px 20px rgba(0,0,0,0.12);"></div>
+      <div style="font-size:11px;letter-spacing:2px;color:var(--gold);font-family:sans-serif;margin-bottom:6px;">あなたは</div>
+      <div style="font-size:22px;color:var(--burgundy);margin-bottom:12px;letter-spacing:1px;">${type.name}</div>
+      <div style="font-size:13px;color:var(--charcoal);line-height:1.9;text-align:left;margin-bottom:1rem;">${type.desc}</div>
+      <div>${type.tags.map(t => `<span class="tag" style="background:${type.hex}22;color:${type.hex};border:1px solid ${type.hex}66;">${t}</span>`).join('')}</div>
+    </div>
+    <button class="btn-secondary" onclick="initQuiz()">もう一度診断する</button>
+    <div class="share-buttons">
+      <button class="share-btn share-insta" onclick="copyForInstagram()">📷 Instagramでシェア</button>
+      <button class="share-btn share-send" onclick="shareWithFriends()">📨 友達に送る</button>
+    </div>
+    <div class="insta-cta" style="margin-top:1.2rem;">
+      <div class="insta-cta-title">あなたの色タイプをInstagramでシェアしませんか？</div>
+      <div class="insta-cta-sub">色活を日常に届けるマコをフォローしてね🌈</div>
+      <a class="insta-btn" href="https://www.instagram.com/nijiiro_colors/" target="_blank" rel="noopener noreferrer" onclick="window.open('https://www.instagram.com/nijiiro_colors/','_blank'); return false;">@nijiiro_colors をフォロー</a>
+    </div>
+  `;
+}
+
+function initMood() {
+  document.getElementById('mood-result').style.display = 'none';
+  const opts = document.getElementById('mood-options');
+  opts.style.display = 'flex';
+  opts.innerHTML = MOODS.map((m,i) =>
+    `<button class="q-btn" onclick="showMoodResult(${i})">${m.label}</button>`
+  ).join('');
+}
+
+function showMoodResult(i) {
+  const m = MOODS[i];
+  document.getElementById('mood-options').style.display = 'none';
+  document.getElementById('mood-result').style.display = 'block';
+  document.getElementById('mood-circle').style.background = m.color.hex;
+  document.getElementById('mood-color-name').textContent = m.color.name;
+  document.getElementById('mood-color-desc').textContent = m.color.keyword || '';
+  document.getElementById('mood-advice').textContent = m.advice;
+  setShareText(`【ニジーロ 気分を整える色】\n今日のおすすめカラー：${m.color.name}\n${m.color.keyword || ''}\n\n${m.advice}`);
+}
+
+function resetMood() {
+  document.getElementById('mood-options').style.display = 'flex';
+  document.getElementById('mood-result').style.display = 'none';
+}
+
+function initDaily() {
+  const days = ['日','月','火','水','木','金','土'];
+  const day = new Date().getDay();
+  const dayColors = [COLORS[5], COLORS[4], COLORS[0], COLORS[2], COLORS[1], COLORS[3], COLORS[5]];
+  const col = dayColors[day];
+  setShareText(`【ニジーロ 今日の色占い】\n今日のラッキーカラー：${col.name}\n${col.keyword}\n\n${col.meaning}`);
+  document.getElementById('daily-content').innerHTML = `
+    <div style="text-align:center;">
+      <div style="font-size:11px;letter-spacing:2px;color:var(--gold);font-family:sans-serif;margin-bottom:4px;">TODAY IS ${days[day]}曜日</div>
+      <div class="daily-circle" style="background:${col.hex};"></div>
+      <div class="daily-color-name">${col.name}</div>
+      <div style="font-size:11px;letter-spacing:2px;color:var(--gold);font-family:sans-serif;margin-bottom:12px;">${col.keyword}</div>
+      <div class="daily-message">${col.meaning}</div>
+    </div>
+    <div class="daily-advice-box">
+      <div class="daily-advice-label">今日の色活アドバイス</div>
+      <div class="daily-advice-text">${col.tags.map(t => `#${t}`).join('　')}の一日。<br>${col.meaning.split('。')[1] ? col.meaning.split('。')[1] + '。' : ''}</div>
+    </div>
+    <div class="share-buttons">
+      <button class="share-btn share-insta" onclick="copyForInstagram()">📷 Instagramでシェア</button>
+      <button class="share-btn share-send" onclick="shareWithFriends()">📨 友達に送る</button>
+    </div>
+    <div class="insta-cta" style="margin-top:1.2rem;">
+      <div class="insta-cta-title">毎日の色活ヒントはこちら🌈</div>
+      <div class="insta-cta-sub">今日の色活をInstagramでも楽しんでください</div>
+      <a class="insta-btn" href="https://www.instagram.com/nijiiro_colors/" target="_blank" rel="noopener noreferrer" onclick="window.open('https://www.instagram.com/nijiiro_colors/','_blank'); return false;">@nijiiro_colors をフォロー</a>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
 <!D<!DOCTYPE html>
 <html lang="ja">
 <head>
