@@ -247,7 +247,7 @@
     <div class="menu-card" onclick="showScreen('screen-daily')">
       <div class="menu-icon">🌈</div>
       <div class="menu-title">今日の色活メッセージ</div>
-      <div class="menu-desc">今日のラッキーカラーをチェック</div>
+      <div class="menu-desc">今の自分への色からの気づきを受け取る</div>
     </div>
   </div>
 
@@ -331,7 +331,7 @@
 <!-- DAILY -->
 <div class="screen" id="screen-daily">
   <button class="btn-back" onclick="showScreen('screen-home')">← ホームへ</button>
-  <div class="screen-title">今日の色占い</div>
+  <div class="screen-title">今日の色活メッセージ</div>
   <div class="screen-sub">今日のあなたへ、色からのメッセージ</div>
   <div id="daily-content"></div>
 </div>
@@ -584,7 +584,7 @@ function initDaily() {
   const day = new Date().getDay();
   const dayColors = [COLORS[5], COLORS[4], COLORS[0], COLORS[2], COLORS[1], COLORS[3], COLORS[5]];
   const col = dayColors[day];
-  setShareText(`【ニジーロ 今日の色占い】\n今日のラッキーカラー：${col.name}\n${col.keyword}\n\n${col.meaning}`);
+  setShareText(`【ニジーロ 今日の色活メッセージ】\n今日の気づきカラー：${col.name}\n${col.keyword}\n\n${col.meaning}`);
   document.getElementById('daily-content').innerHTML = `
     <div style="text-align:center;">
       <div style="font-size:11px;letter-spacing:2px;color:var(--gold);font-family:sans-serif;margin-bottom:4px;">TODAY IS ${days[day]}曜日</div>
